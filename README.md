@@ -6,11 +6,13 @@ Une application pour suivre des jobs / candidatures, avec un backend Node.js et 
 
 ## 📁 Structure du projet
 
+````txt
 job-tracker/
-├─ frontend/ # Next.js + Tailwind
-├─ backend/ # Node.js + Express + SQLite
+├─ frontend/    # Next.js + Tailwind
+├─ backend/     # Node.js + Express + SQLite
 ├─ .gitignore
 └─ README.md
+
 
 ---
 
@@ -21,7 +23,7 @@ job-tracker/
 ```bash
 git clone https://github.com/TON-USERNAME/job-tracker.git
 cd job-tracker
-```
+````
 
 ### 2. Installer les dépendances
 
@@ -41,10 +43,8 @@ npm run dev
 
 Frontend sur http://localhost:3000, backend sur http://localhost:3001
 
-🔧 Tech Stack
+## 🔧 Tech Stack
 
-Frontend: Next.js 13, Tailwind CSS
-
-Backend: Node.js, Express, SQLite
-
-Auth / Gmail: Gmail API OAuth2
+- **Frontend** : Next.js 13, Tailwind CSS
+- **Backend** : Node.js, Express, SQLite
+- **Auth / Email** : Gmail API OAuth2
