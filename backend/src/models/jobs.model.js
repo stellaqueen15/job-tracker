@@ -3,10 +3,14 @@ const db = require("../db/database");
 const JobModel = {
   getAll() {
     return new Promise((resolve, reject) => {
-      db.all("SELECT * FROM jobs", [], (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
+      db.all(
+        "SELECT * FROM jobs ORDER BY appliedDate DESC",
+        [],
+        (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
+        }
+      );
     });
   },
 

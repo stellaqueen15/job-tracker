@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Job } from "../../types/job";
+import Navbar from "../../components/Navbar";
 
 export default function EditJobPage() {
   const params = useParams();
@@ -25,19 +26,17 @@ export default function EditJobPage() {
 
   const [loading, setLoading] = useState(true);
 
-  // fetch le job au chargement
   useEffect(() => {
     const fetchJob = async () => {
       try {
         const res = await fetch(`http://localhost:3001/api/jobs/${id}`);
         const data = await res.json();
 
-        // Formatage de la date
         if (data.appliedDate) {
           const d = new Date(data.appliedDate);
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, "0");
-          const dd = String(d.getDate()).padStart(2, "0");
+          const yyyy = d.getUTCFullYear();
+          const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+          const dd = String(d.getUTCDate()).padStart(2, "0");
           data.appliedDate = `${yyyy}-${mm}-${dd}`;
         }
 
@@ -96,10 +95,11 @@ export default function EditJobPage() {
   if (loading) return <div>Chargement...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen flex">
+      <Navbar />
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md space-y-4"
+        className="bg-white shadow-lg mx-auto my-10 rounded-xl p-8 w-full max-w-md space-y-4"
       >
         <h1 className="text-3xl font-extrabold text-center text-indigo-600">
           Modifier le job

@@ -1,66 +1,124 @@
 "use client";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
-export default function EditJobPage() {
-  const router = useRouter();
+export default function Sidebar() {
   const [isImporting, setIsImporting] = useState(false);
 
+  const pathname = usePathname();
+
+  const isActive = (path: string): boolean => pathname === path;
+
+  const handleImportGmail = async () => {
+    try {
+      setIsImporting(true);
+
+      const res = await fetch("http://localhost:3001/api/jobs/import-gmail");
+
+      const data = await res.json();
+      alert(`✅ ${data.imported} jobs importés`);
+    } catch (error) {
+      console.error(error);
+      alert("❌ Erreur lors de l'import");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
-    <nav className="bg-white shadow-md w-[80%] rounded-full mt-5">
-      <div className="mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#9041d0]">Job Tracker</h1>
+    <aside className="bg-white shadow-md w-64 h-screen sticky top-0 flex flex-col justify-between px-6 py-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[#9D4FDD] mb-10">Job Tracker</h1>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => router.push("/bulk-import")}
-            className="bg-[#9041d0] font-bold flex justify-center text-[1.45rem] cursor-pointer w-11 h-11 text-white px-4 py-1 rounded-full hover:bg-[#8037bc] transition"
+        <nav className="flex flex-col gap-2">
+          <Link
+            href="/dashboard"
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition
+              ${
+                isActive("/dashboard")
+                  ? "bg-[#9D4FDD]/10 text-[#9D4FDD] font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
-            &#123;&#125;
-          </button>
+            <i className="fi fi-sr-home"></i>
+            Dashboard
+          </Link>
 
-          <button
-            disabled={isImporting}
-            onClick={async () => {
-              try {
-                setIsImporting(true);
-
-                const res = await fetch(
-                  "http://localhost:3001/api/jobs/import-gmail"
-                );
-
-                const data = await res.json();
-                alert(`✅ ${data.imported} jobs importés`);
-              } catch (err) {
-                console.error(err);
-                alert("❌ Erreur lors de l'import");
-              } finally {
-                setIsImporting(false);
-              }
-            }}
-            className={`flex justify-center text-[1.45rem] cursor-pointer w-11 h-11 text-white px-4 py-2 rounded-full transition
-                ${
-                  isImporting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#9041d0] hover:bg-[#8037bc]"
-                }
-              `}
+          <Link
+            href="/jobs"
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition
+              ${
+                isActive("/jobs")
+                  ? "bg-[#9D4FDD]/10 text-[#9D4FDD] font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
-            {isImporting ? (
-              "⏳ Import en cours..."
-            ) : (
-              <i className="fi fi-br-at"></i>
-            )}
-          </button>
+            <i className="fi fi-sr-briefcase"></i>
+            Mes candidatures
+          </Link>
 
-          <button
-            onClick={() => router.push("/newJob")}
-            className="bg-[#9041d0] flex justify-center text-[1.45rem] cursor-pointer w-11 h-11 text-white px-4 py-2 rounded-full hover:bg-[#8037bc] transition"
+          <Link
+            href="/stats"
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition
+              ${
+                isActive("/stats")
+                  ? "bg-[#9D4FDD]/10 text-[#9D4FDD] font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
-            <i className="fi fi-sr-add"></i>
-          </button>
-        </div>
+            <i className="fi fi-sr-chart-pie"></i>
+            Statistiques
+          </Link>
+
+          <Link
+            href="/bulk-import"
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition
+              ${
+                isActive("/bulk-import")
+                  ? "bg-[#9D4FDD]/10 text-[#9D4FDD] font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+          >
+            <i className="fi fi-sr-inbox-in"></i>
+            Import manuel
+          </Link>
+        </nav>
       </div>
-    </nav>
+
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={handleImportGmail}
+          disabled={isImporting}
+          className={`flex items-center cursor-pointer justify-center gap-2 py-2 rounded-lg shadow-md transition
+            ${
+              isImporting
+                ? "bg-gray-300 cursor-not-allowed text-gray-600"
+                : "bg-linear-to-t from-[#9D4FDD] to-[#C083F1] text-white hover:opacity-90"
+            }`}
+        >
+          {isImporting ? (
+            "Import en cours..."
+          ) : (
+            <>
+              <i className="fi fi-br-at"></i>
+              Import Gmail
+            </>
+          )}
+        </button>
+
+        <Link
+          href="/newJob"
+          className="flex items-center cursor-pointer justify-center gap-2 bg-linear-to-t from-[#9D4FDD] to-[#C083F1] text-white py-2 rounded-lg shadow-md hover:opacity-90 transition"
+        >
+          <i className="fi fi-sr-add"></i>
+          Nouvelle candidature
+        </Link>
+
+        <p className="text-xs text-gray-400 text-center mt-4">
+          © 2026 Job Tracker
+        </p>
+      </div>
+    </aside>
   );
 }

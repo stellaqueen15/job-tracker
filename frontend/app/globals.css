@@ -1,2 +1,8 @@
 @import "tailwindcss";
 @import "@flaticon/flaticon-uicons/css/all/all";
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f2f2f2;
+}

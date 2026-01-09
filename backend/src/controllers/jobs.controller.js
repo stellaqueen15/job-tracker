@@ -58,114 +58,84 @@ function extractLink(detail) {
 
 const MAX_RESULTS_PER_PAGE = 100;
 
-const BATCH_SIZE = 20; // nombre de mails traités en parallèle
+const BATCH_SIZE = 20;
 
 exports.importJobsFromGmail = async (req, res) => {
   try {
     const auth = await authorize();
     const gmail = google.gmail({ version: "v1", auth });
 
-    const ATS_KEYWORDS = [
-      "greenhouse.io",
-      "greenhouse-mail.io",
-      "lever.co",
-      "hire.lever.co",
-      "workablemail.com",
-      "applytojob.com",
-      "smartrecruiters.com",
-      "jobvite.com",
-      "breezy.hr",
-      "recruitee.com",
-      "teamtailor.com",
-      "icims.com",
-      "icims.eu",
-      "rippling.com",
-      "trakstar.com",
-      "jobadder.com",
-      "welcome.hr",
-      "hired.com",
-      "indeed.com",
-      "indeedapply@indeed.com",
-      "glassdoor.com",
-      "ziprecruiter.com",
-      "monster.com",
-      "linkedin.com",
-      "bamboohr.com",
-      "dayforce.com",
-    ];
-    const EXCLUDED_KEYWORDS = [
-      "espresso-jobs",
-      "newsletter",
-      "alert",
-      "no-reply",
-      "noreply",
-      "support@",
-      "info@",
+    const MAIL_KEYWORDS = [
+      "candidature spontanée",
+      "petite candidature, gros potentiel",
+      "candidature",
     ];
 
+    // Fonction pour normaliser texte (minuscules + trim + espaces)
+    const normalize = (str) => str.toLowerCase().trim().replace(/\s+/g, " ");
+
+    // 1️⃣ Récupérer tous les mails envoyés
     let messages = [];
     let nextPageToken = null;
 
     do {
-      const resList = await gmail.users.messages.list({
+      const response = await gmail.users.messages.list({
         userId: "me",
         maxResults: MAX_RESULTS_PER_PAGE,
         pageToken: nextPageToken,
-        q: "after:2025/07/28",
+        q: "in:sent after:2025/07/28",
       });
-      messages.push(...(resList.data.messages || []));
-      nextPageToken = resList.data.nextPageToken;
+
+      if (response.data.messages) messages.push(...response.data.messages);
+
+      nextPageToken = response.data.nextPageToken;
     } while (nextPageToken);
 
-    console.log(`📨 Emails récupérés : ${messages.length}`);
+    console.log(`📨 Mails envoyés récupérés : ${messages.length}`);
 
+    // 2️⃣ Récupérer jobs déjà en DB
     const existingJobs = await JobModel.getAll();
     const existingSet = new Set(
-      existingJobs.map((j) => `${j.company}|||${j.position}`)
+      existingJobs.map(
+        (job) => `${normalize(job.company)}|||${normalize(job.position)}`
+      )
     );
 
     const jobsToInsert = [];
     const skipped = [];
 
-    // 🔹 fonction pour traiter un batch
+    // 3️⃣ Fonction pour traiter un batch
     const processBatch = async (batch) => {
-      for (const msg of batch) {
+      for (const message of batch) {
         try {
           const detail = await gmail.users.messages.get({
             userId: "me",
-            id: msg.id,
+            id: message.id,
             format: "metadata",
-            metadataHeaders: ["From", "Subject"],
+            metadataHeaders: ["Subject", "To"],
           });
 
           const headers = detail.data.payload.headers || [];
           const subject =
             headers.find((h) => h.name === "Subject")?.value || "";
-          const from = headers.find((h) => h.name === "From")?.value || "";
+          const to = headers.find((h) => h.name === "To")?.value || "";
 
+          // Vérifier si le mail correspond à un job
           const subjectLower = subject.toLowerCase();
-          const fromLower = from.toLowerCase();
-
-          if (
-            EXCLUDED_KEYWORDS.some(
-              (k) => subjectLower.includes(k) || fromLower.includes(k)
-            )
-          )
-            continue;
-
-          const isJobMail = ATS_KEYWORDS.some(
-            (k) => subjectLower.includes(k) || fromLower.includes(k)
+          const isJobMail = MAIL_KEYWORDS.some((kw) =>
+            subjectLower.includes(kw.toLowerCase())
           );
           if (!isJobMail) continue;
 
-          const key = `${from}|||${subject}`;
-          if (existingSet.has(key)) {
-            skipped.push({ company: from, position: subject });
+          // Clé unique normalisée
+          const uniqueKey = `${normalize(to)}|||${normalize(subject)}`;
+          if (existingSet.has(uniqueKey)) {
+            skipped.push({ company: to, position: subject });
             continue;
           }
 
           jobsToInsert.push({
-            company: from || "Inconnue",
+            company: to || "Entreprise inconnue",
             position: subject || "Poste inconnu",
             status: "Postulé",
             appliedDate: new Date(
@@ -179,31 +149,49 @@ exports.importJobsFromGmail = async (req, res) => {
             jobLink: extractLink(detail) || null,
           });
 
-          existingSet.add(key);
+          // Ajouter à l’ensemble pour éviter doublons dans le même import
+          existingSet.add(uniqueKey);
         } catch (err) {
-          console.error("Erreur mail :", msg.id, err.message);
+          console.error(
+            "❌ Erreur lors du traitement du mail :",
+            message.id,
+            err.message
+          );
         }
       }
     };
 
-    // 🔹 traitement par batch
+    // 4️⃣ Traiter par batch
     for (let i = 0; i < messages.length; i += BATCH_SIZE) {
       const batch = messages.slice(i, i + BATCH_SIZE);
       await processBatch(batch);
       console.log(`✅ Batch ${i / BATCH_SIZE + 1} traité`);
     }
 
-    // 🔹 Insert batch final
-    await Promise.all(jobsToInsert.map((job) => JobModel.create(job)));
+    // 5️⃣ Dédupliquer au cas où
+    const dedupedJobs = Array.from(
+      new Map(
+        jobsToInsert.map((job) => [
+          `${normalize(job.company)}|||${normalize(job.position)}`,
+          job,
+        ])
+      ).values()
+    );
+
+    // 6️⃣ Insérer dans la DB
+    await Promise.all(dedupedJobs.map((job) => JobModel.create(job)));
 
     res.json({
       success: true,
-      imported: jobsToInsert.length,
+      imported: dedupedJobs.length,
       skipped: skipped.length,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
