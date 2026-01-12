@@ -2,6 +2,7 @@ const JobModel = require("../models/jobs.model");
 const { google } = require("googleapis");
 const fs = require("fs");
 const path = require("path");
+const { validationResult } = require("express-validator");
 
 const CREDENTIALS_PATH = path.join(
   __dirname,
@@ -219,6 +220,11 @@ exports.getJobById = async (req, res) => {
 };
 
 exports.createJob = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     const result = await JobModel.create(req.body);
     res.status(201).json(result);
@@ -270,6 +276,11 @@ exports.createManyJobs = async (req, res) => {
 };
 
 exports.updateJob = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     await JobModel.update(req.params.id, req.body);
     res.sendStatus(204);

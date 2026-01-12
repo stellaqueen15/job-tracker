@@ -33,7 +33,7 @@ export default function Sidebar() {
 
         <nav className="flex flex-col gap-2">
           <Link
-            href="/dashboard"
+            href="/"
             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition
               ${
                 isActive("/dashboard")
@@ -106,14 +106,6 @@ export default function Sidebar() {
             </>
           )}
         </button>
-
-        <Link
-          href="/newJob"
-          className="flex items-center cursor-pointer justify-center gap-2 bg-linear-to-t from-[#9D4FDD] to-[#C083F1] text-white py-2 rounded-lg shadow-md hover:opacity-90 transition"
-        >
-          <i className="fi fi-sr-add"></i>
-          Nouvelle candidature
-        </Link>
 
         <p className="text-xs text-gray-400 text-center mt-4">
           © 2026 Job Tracker

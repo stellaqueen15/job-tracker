@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Job } from "../types/job";
+import { Input } from "@/components/ui/input";
 
 interface SearchBarProps {
   data: Job[];
@@ -24,7 +25,7 @@ export default function SearchBar({
 
   return (
     <div>
-      <input
+      <Input
         type="text"
         placeholder={placeholder || "Rechercher..."}
         value={query}

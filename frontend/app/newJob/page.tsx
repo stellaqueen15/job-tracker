@@ -1,15 +1,40 @@
 "use client";
 import { useState } from "react";
+import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Job } from "../types/job";
+import { CalendarIcon } from "lucide-react";
+import Navbar from "../components/Navbar";
+import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function NewJob() {
   const router = useRouter();
+  const today = new Date().toLocaleDateString("en-CA");
+
   const [job, setJob] = useState<Partial<Job>>({
     company: "",
     position: "",
-    status: "",
-    appliedDate: "",
+    status: "Postulé",
+    appliedDate: today,
     notes: "",
     hasFollowedUp: 0,
     canFollowUp: 1,
@@ -17,6 +42,12 @@ export default function NewJob() {
     isInteresting: 2,
     jobLink: "",
   });
+
+  const appliedDateAsDate = job.appliedDate
+    ? new Date(job.appliedDate)
+    : undefined;
+
+  const [open, setOpen] = React.useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -59,151 +90,207 @@ export default function NewJob() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md space-y-4"
-      >
-        <h1 className="text-3xl font-extrabold text-center text-indigo-600">
-          Ajouter un job
-        </h1>
+    <div className="min-h-screen flex">
+      <Navbar />
+      <main className="mx-auto w-[80%] py-6 space-y-4">
+        <FieldSet onSubmit={handleSubmit} className="mx-auto w-100">
+          <FieldGroup>
+            <h1 className="text-3xl font-extrabold text-center text-white">
+              Ajouter un job
+            </h1>
 
-        {/* Entreprise */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">Entreprise</label>
-          <input
-            type="text"
-            name="company"
-            placeholder="Ex: Google"
-            value={job.company}
-            onChange={handleChange}
-            className="p-3 text-blue-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-        </div>
+            <Field className="flex flex-col">
+              <FieldLabel className="">Entreprise</FieldLabel>
+              <Input
+                type="text"
+                name="company"
+                placeholder="Ex: Google"
+                value={job.company}
+                onChange={handleChange}
+                className=""
+                required
+              />
+            </Field>
 
-        {/* Poste */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">Nom du poste</label>
-          <input
-            type="text"
-            name="position"
-            placeholder="Ex: Développeur Frontend"
-            value={job.position}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-        </div>
+            {/* Poste */}
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                Nom du poste
+              </FieldLabel>
+              <Input
+                type="text"
+                name="position"
+                placeholder="Ex: Développeur Frontend"
+                value={job.position}
+                onChange={handleChange}
+                className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                required
+              />
+            </Field>
 
-        {/* État de la candidature */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">Statut</label>
-          <select
-            name="status"
-            value={job.status}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">Choisir un statut</option>
-            <option value="Postulé">Candidature envoyée</option>
-            <option value="Entretien">Entretien</option>
-            <option value="Offre">Offre</option>
-            <option value="Refus">Refus</option>
-            <option value="Archivé">Archivé</option>
-          </select>
-        </div>
+            {/* État de la candidature */}
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                État de la candidature
+              </FieldLabel>
+              <Select
+                value={job.status}
+                onValueChange={(value) =>
+                  setJob((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="Choisis l'état de la candidature"
+                    onChange={handleChange}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>États</SelectLabel>
+                    <SelectItem value="Postulé">Candidature envoyée</SelectItem>
+                    <SelectItem value="Entretien">Entretien</SelectItem>
+                    <SelectItem value="Offre">Offre</SelectItem>
+                    <SelectItem value="Refus">Refus</SelectItem>
+                    <SelectItem value="Archivé">Archivé</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
 
-        {/* Date de la candidature */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Date de candidature
-          </label>
-          <input
-            type="date"
-            name="appliedDate"
-            value={job.appliedDate}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                Date de candidature
+              </FieldLabel>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="justify-between text-left font-normal cursor-pointer"
+                  >
+                    {job.appliedDate
+                      ? new Date(job.appliedDate).toLocaleDateString("fr-CA")
+                      : "Choisir une date"}
+                    <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
 
-        {/* Follow Up */}
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="hasFollowedUp"
-              checked={job.hasFollowedUp === 1}
-              onChange={handleChange}
-              className="form-checkbox h-5 w-5 text-indigo-600"
-            />
-            <span className="text-gray-700">Suivi effectué</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="canFollowUp"
-              checked={job.canFollowUp === 1}
-              onChange={handleChange}
-              className="form-checkbox h-5 w-5 text-indigo-600"
-            />
-            <span className="text-gray-700">Suivi possible</span>
-          </label>
-        </div>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={appliedDateAsDate}
+                    onSelect={(date) => {
+                      if (!date) return;
 
-        {/* Niveau d'appréciation*/}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Intérêt pour le poste
-          </label>
-          <select
-            name="isInteresting"
-            value={job.isInteresting ?? 2}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value={1}>1 - Pas trop envie</option>
-            <option value={2}>2 - Normal / neutre</option>
-            <option value={3}>3 - Super motivée</option>
-          </select>
-        </div>
+                      setJob((prev) => ({
+                        ...prev,
+                        appliedDate: date.toISOString().split("T")[0],
+                      }));
 
-        {/* Lien de l'offre */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Lien de loffre
-          </label>
-          <input
-            type="url"
-            name="jobLink"
-            placeholder="https://..."
-            value={job.jobLink ?? ""}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
+                      setOpen(false);
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </Field>
 
-        {/* Notes */}
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">Notes</label>
-          <textarea
-            name="notes"
-            placeholder="Ajouter des notes..."
-            value={job.notes ?? ""}
-            onChange={handleChange}
-            className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none h-24"
-          />
-        </div>
+            <Field className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="hasFollowedUp"
+                  checked={job.hasFollowedUp === 1}
+                  onCheckedChange={(checked) =>
+                    setJob((prev) => ({
+                      ...prev,
+                      hasFollowedUp: checked ? 1 : 0,
+                    }))
+                  }
+                />
+                <Label htmlFor="hasFollowedUp" className="text-sm">
+                  Suivi effectué
+                </Label>
+              </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          className="w-full cursor-pointer bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
-        >
-          Ajouter
-        </button>
-      </form>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="canFollowUp"
+                  checked={job.canFollowUp === 1}
+                  onCheckedChange={(checked) =>
+                    setJob((prev) => ({
+                      ...prev,
+                      canFollowUp: checked ? 1 : 0,
+                    }))
+                  }
+                />
+                <Label htmlFor="canFollowUp" className="text-sm">
+                  Suivi possible
+                </Label>
+              </div>
+            </Field>
+
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                Intérêt pour le poste
+              </FieldLabel>
+              <Select
+                value={String(job.isInteresting ?? 2)}
+                onValueChange={(value) =>
+                  setJob((prev) => ({
+                    ...prev,
+                    isInteresting: Number(value),
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Niveau d’intérêt" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Intérêt</SelectLabel>
+                    <SelectItem value="1">1 - Pas trop envie</SelectItem>
+                    <SelectItem value="2">2 - Normal / neutre</SelectItem>
+                    <SelectItem value="3">3 - Super motivée</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                Lien de loffre
+              </FieldLabel>
+              <Input
+                type="url"
+                name="jobLink"
+                placeholder="https://..."
+                value={job.jobLink ?? ""}
+                onChange={handleChange}
+                className="p-3 border text-blue-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </Field>
+
+            <Field className="flex flex-col">
+              <FieldLabel className="mb-1 font-medium text-gray-700">
+                Notes
+              </FieldLabel>
+              <textarea
+                name="notes"
+                placeholder="Ajouter des notes..."
+                value={job.notes ?? ""}
+                onChange={handleChange}
+                className="p-3 border rounded-lg focus:outline-none h-24"
+              />
+            </Field>
+
+            {/* Submit */}
+            <Button type="submit" variant="outline" className="cursor-pointer">
+              Ajouter
+            </Button>
+          </FieldGroup>
+        </FieldSet>
+      </main>
     </div>
   );
 }
