@@ -21,7 +21,7 @@ job-tracker/
 ### 1. Cloner le repo
 
 ```bash
-git clone https://github.com/TON-USERNAME/job-tracker.git
+git clone https://github.com/stellaqueen15/job-tracker.git
 cd job-tracker
 ````
 
